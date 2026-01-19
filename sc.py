@@ -79,9 +79,8 @@ RISK LEVEL:
 NOTE: Never DELETE files permanantly, always move them to the trash.
 
 CLARIFICATION:
-needs_clarification=true only if a required detail is missing and guessing would be unsafe and add questions accordingly, based on what needs to be clarified. It is always better to ask clarifying question over guessing and hallucinating crucial details.
-Examples:
-- "remind me to do ... tomorrow" with no time
+- Set needs_clarification=true only if a required detail is missing and guessing would be unsafe and add questions accordingly, based on what needs to be clarified. It is always better to ask clarifying question over guessing and hallucinating crucial details.
+Examples of when to set needs_clarification=true:
 - "email John" with no email address and no known contact context
 - "Pay my electricity bill" with no website, login details, or any other crucial piece
 Otherwise set false.
