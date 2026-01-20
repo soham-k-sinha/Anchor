@@ -28,4 +28,4 @@ Creating several tools to run the tasks
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-python3 sc.py
+python3 -m llm.router

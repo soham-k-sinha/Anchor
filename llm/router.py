@@ -4,38 +4,8 @@ from typing import List, Literal, Optional, Dict, Any
 import ollama
 from pydantic import BaseModel, Field, ValidationError
 
-
-
-"""
--------- Schema Pydantic Definitions --------
-"""
-
-
-# Variable definitions for ouput schema
-Domain = Literal["reminders", "mail", "files", "browser", "system", "unknown"]
-Risk = Literal["low", "medium", "high"]
-
-
-# Information for LLM #2
-class RoutingHints(BaseModel):
-    # Which tool should LLM #2 use for the task (what does it prefer)
-    prefer: List[Literal["shortcuts", "browser", "files_api"]] = Field(default_factory=list)
-
-    # What should writing mail tool default to
-    mail_default: Optional[Literal["draft", "send"]] = None
-
-    # Should the task require confirmation from the user to execute
-    require_confirmation: bool = True
-
-
-# Main router output schema --> This is the output of LLM #1
-class RoutingResult(BaseModel):
-    domains: List[Domain] = Field(min_length=1)
-    risk: Risk
-    needs_clarification: bool
-    questions: List[str] = Field(default_factory=list)
-    hints: RoutingHints = Field(default_factory=RoutingHints)
-
+from schemas.routing import RoutingResult, RoutingHints
+from helper_functions.funcs import _strip_code_fences, _try_parse_routing, _repair_json_with_ollama
 
 
 """
@@ -109,42 +79,6 @@ Output: {"domains":["files"],"risk":"medium","needs_clarification":false,"questi
 Input: {"user_message":"Give me updates on the latest stock prices for Apple Inc."}
 Output: {"domains":["browser"],"risk":"low","needs_clarification":false,"questions":[],"hints":{"prefer":["browser"],"mail_default":null,"require_confirmation":true}}
 """.strip()
-
-
-
-"""
--------- Helper Functions --------
-"""
-
-
-def _strip_code_fences(s: str) -> str:
-    s = s.strip()
-    if s.startswith("```"):
-        # handle ```json ... ```
-        parts = s.split("```")
-        if len(parts) >= 2:
-            return parts[1].strip()
-    return s
-
-def _try_parse_routing(raw: str) -> RoutingResult:
-    raw = _strip_code_fences(raw)
-    data = json.loads(raw)
-    return RoutingResult.model_validate(data)
-
-def _repair_json_with_ollama(raw: str, model: str = "qwen2.5-coder:3b") -> str:
-    # Only used if model outputs malformed JSON.
-    repair_prompt = f"""
-Fix the following so it becomes valid JSON matching the required schema.
-Rules:
-- Output JSON only, no markdown.
-- Do not change meaning; only fix formatting, quotes, commas, and field names if needed.
-
-TEXT:
-{raw}
-""".strip()
-    resp = ollama.generate(model=model, prompt=repair_prompt, stream=False)
-    return resp["response"].strip()
-
 
 
 
