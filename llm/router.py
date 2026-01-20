@@ -1,11 +1,12 @@
 import json
-from typing import List, Literal, Optional, Dict, Any
+from typing import Optional
 
 import ollama
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import ValidationError
 
 from schemas.routing import RoutingResult, RoutingHints
-from helper_functions.funcs import _strip_code_fences, _try_parse_routing, _repair_json_with_ollama
+from helper_functions.funcs import _try_parse_routing, _repair_json_with_ollama
+from config import ROUTER_MODEL, REPAIR_MODEL
 
 
 """
@@ -87,7 +88,7 @@ Output: {"domains":["browser"],"risk":"low","needs_clarification":false,"questio
 -------- Final LLM #1 call --------
 """
 
-def route_user_request(user_message: str, model: str = "qwen2.5:7b-instruct", timezone: str = "Asia/Kolkata", now_iso: Optional[str] = None, max_repair_attempts: int = 1) -> RoutingResult:
+def route_user_request(user_message: str, model: str = ROUTER_MODEL, timezone: str = "Asia/Kolkata", now_iso: Optional[str] = None, max_repair_attempts: int = 1) -> RoutingResult:
     """
     Returns RoutingResult (domains, risk, clarification questions, hints).
     Uses Ollama local model by default.
@@ -116,7 +117,7 @@ def route_user_request(user_message: str, model: str = "qwen2.5:7b-instruct", ti
     except (json.JSONDecodeError, ValidationError):
         # Optional single repair attempt
         for _ in range(max_repair_attempts):
-            repaired = _repair_json_with_ollama(raw, model="qwen2.5-coder:3b")
+            repaired = _repair_json_with_ollama(raw, model=REPAIR_MODEL)
             try:
                 return _try_parse_routing(repaired)
             except (json.JSONDecodeError, ValidationError):
